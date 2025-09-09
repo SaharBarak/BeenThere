@@ -1,0 +1,12 @@
+# Cursor Rules (apps/mobile)
+- Work only inside apps/mobile/.
+- Follow FRONTEND_AGENT_PROMPT.md.
+- Keep diffs small; no mass reformatting.
+- No OFFSET pagination; use cursor strings from the API.
+- Don’t modify backend or API contracts.
+- TypeScript strict; use zod for runtime validation.
+- State: Zustand; Data: TanStack Query; Navigation: React Navigation.
+
+When starting a task:
+1) Read FRONTEND_AGENT_PROMPT.md and summarize.
+2) Propose PR1–PR4 plan and wait for approval before edits.
