@@ -1,0 +1,97 @@
+plugins {
+    id 'org.springframework.boot' version '3.3.3'
+    id 'io.spring.dependency-management' version '1.1.5'
+    id 'org.jetbrains.kotlin.jvm' version '2.0.0'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.0.0'
+    // id 'io.gitlab.arturbosch.detekt' version '1.23.6'
+    id 'org.jlleitschuh.gradle.ktlint' version '12.1.1'
+}
+
+group = 'com.beenthere'
+version = '0.0.1-SNAPSHOT'
+description = 'BeenThere API'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // --- Core reactive web stack ---
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // --- Data (Reactive) ---
+    implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+    runtimeOnly 'org.postgresql:r2dbc-postgresql'     // Reactive driver
+
+    // --- Flyway via JDBC (separate from R2DBC) ---
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc' // DataSource + HikariCP
+    implementation 'org.flywaydb:flyway-core'
+    // If you want vendor-specific Flyway features, keep this; otherwise it's optional
+    // implementation 'org.flywaydb:flyway-database-postgresql'
+    runtimeOnly 'org.postgresql:postgresql'           // JDBC driver for Flyway
+
+    // --- JSON / Kotlin ---
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect'
+    implementation 'io.projectreactor.kotlin:reactor-kotlin-extensions'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-reactor'
+    
+    // --- Result handling ---
+    implementation 'com.michael-bull.kotlin-result:kotlin-result:2.0.1'
+    
+    // --- JWT ---
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    // --- Observability ---
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
+    // --- API docs (optional but useful) ---
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.6.0'
+
+    // --- Testing ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:r2dbc'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// Kotlin compiler flags (Groovy DSL)
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        freeCompilerArgs += ['-Xjsr305=strict']
+        // jvmTarget not required when using toolchain, but harmless:
+        jvmTarget = '21'
+    }
+}
+
+// Lint configs (keep strict; tweak later if needed)
+// detekt {
+//     buildUponDefaultConfig = true
+//     allRules = false
+//     config = files("$projectDir/config/detekt/detekt.yml")
+// }
+
+ktlint {
+    version = "1.2.1"
+    android = false
+}

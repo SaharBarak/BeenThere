@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: beenthere-api
+
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/beenthere
+    username: postgres
+    password: postgres
+
+  datasource:          # For Flyway (JDBC)
+    url: jdbc:postgresql://localhost:5432/beenthere
+    username: postgres
+    password: postgres
+
+  flyway:
+    locations: classpath:db/migration
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+# JWT Configuration
+jwt:
+  secret: beenthere-secret-key-that-should-be-changed-in-production
+  access-token-expiration: 900000 # 15 minutes in milliseconds
+  refresh-token-expiration: 604800000 # 7 days in milliseconds
+
+# Logging
+logging:
+  level:
+    com.beenthere: DEBUG
+    org.springframework.security: DEBUG
