@@ -9,19 +9,14 @@ import java.time.Instant
 data class SwipeEntity(
     @Id
     val id: String,
-    
     @Column("swiper_id")
     val swiperId: String,
-    
     @Column("target_type")
     val targetType: String, // "listing" or "user"
-    
     @Column("target_id")
     val targetId: String,
-    
     @Column("action")
     val action: String, // "like" or "pass"
-    
     @Column("created_at")
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now(),
 )

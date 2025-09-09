@@ -13,31 +13,39 @@ data class ApiResponse<T>(
     val success: Boolean,
     val data: T? = null,
     val error: ErrorDetails? = null,
-    val timestamp: Instant = Instant.now()
+    val timestamp: Instant = Instant.now(),
 ) {
     companion object {
-        fun <T> success(data: T): ApiResponse<T> = ApiResponse(
-            success = true,
-            data = data
-        )
-        
-        fun <T> error(error: AppError): ApiResponse<T> = ApiResponse(
-            success = false,
-            error = ErrorDetails(
-                code = error.httpStatus.value(),
-                message = error.message,
-                type = error::class.simpleName ?: "UnknownError"
+        fun <T> success(data: T): ApiResponse<T> =
+            ApiResponse(
+                success = true,
+                data = data,
             )
-        )
-        
-        fun <T> error(message: String, status: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR): ApiResponse<T> = ApiResponse(
-            success = false,
-            error = ErrorDetails(
-                code = status.value(),
-                message = message,
-                type = "Error"
+
+        fun <T> error(error: AppError): ApiResponse<T> =
+            ApiResponse(
+                success = false,
+                error =
+                    ErrorDetails(
+                        code = error.httpStatus.value(),
+                        message = error.message,
+                        type = error::class.simpleName ?: "UnknownError",
+                    ),
             )
-        )
+
+        fun <T> error(
+            message: String,
+            status: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
+        ): ApiResponse<T> =
+            ApiResponse(
+                success = false,
+                error =
+                    ErrorDetails(
+                        code = status.value(),
+                        message = message,
+                        type = "Error",
+                    ),
+            )
     }
 }
 
@@ -45,7 +53,7 @@ data class ErrorDetails(
     val code: Int,
     val message: String,
     val type: String,
-    val details: Map<String, Any>? = null
+    val details: Map<String, Any>? = null,
 )
 
 /**

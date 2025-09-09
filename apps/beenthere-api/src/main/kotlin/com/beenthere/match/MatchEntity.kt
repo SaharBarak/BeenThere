@@ -9,29 +9,23 @@ import java.time.Instant
 data class MatchEntity(
     @Id
     val id: String,
-    
     @Column("user_id")
     val userId: String,
-    
     @Column("landlord_id")
     val landlordId: String,
-    
     @Column("listing_id")
     val listingId: String,
-    
     @Column("status")
     val status: String,
-    
     @Column("created_at")
     val createdAt: Instant = Instant.now(),
-    
     @Column("updated_at")
-    val updatedAt: Instant = Instant.now()
+    val updatedAt: Instant = Instant.now(),
 )
 
 enum class MatchStatus {
     PENDING,
     ACCEPTED,
     REJECTED,
-    EXPIRED
+    EXPIRED,
 }

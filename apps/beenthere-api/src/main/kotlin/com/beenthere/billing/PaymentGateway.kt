@@ -6,7 +6,12 @@ import reactor.core.publisher.Mono
 
 interface PaymentGateway {
     fun processPayment(request: PaymentRequest): Mono<Result<PaymentResponse, AppError>>
-    fun refundPayment(paymentId: String, amount: java.math.BigDecimal): Mono<Result<RefundResponse, AppError>>
+
+    fun refundPayment(
+        paymentId: String,
+        amount: java.math.BigDecimal,
+    ): Mono<Result<RefundResponse, AppError>>
+
     fun getPaymentStatus(paymentId: String): Mono<Result<PaymentStatus, AppError>>
 }
 
@@ -15,7 +20,7 @@ data class PaymentRequest(
     val currency: String = "USD",
     val description: String,
     val customerId: String,
-    val metadata: Map<String, String> = emptyMap()
+    val metadata: Map<String, String> = emptyMap(),
 )
 
 data class PaymentResponse(
@@ -23,14 +28,14 @@ data class PaymentResponse(
     val status: PaymentStatus,
     val amount: java.math.BigDecimal,
     val currency: String,
-    val transactionId: String? = null
+    val transactionId: String? = null,
 )
 
 data class RefundResponse(
     val refundId: String,
     val paymentId: String,
     val amount: java.math.BigDecimal,
-    val status: RefundStatus
+    val status: RefundStatus,
 )
 
 enum class PaymentStatus {
@@ -39,12 +44,12 @@ enum class PaymentStatus {
     COMPLETED,
     FAILED,
     CANCELLED,
-    REFUNDED
+    REFUNDED,
 }
 
 enum class RefundStatus {
     PENDING,
     PROCESSING,
     COMPLETED,
-    FAILED
+    FAILED,
 }

@@ -1,22 +1,21 @@
 package com.beenthere.match
 
 import com.beenthere.common.ApiResponse
-import com.beenthere.common.toResponse
 import com.beenthere.common.toResponseEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
-import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @RestController
 @RequestMapping("/matches")
 class MatchController(
-    private val matchService: MatchService
+    private val matchService: MatchService,
 ) {
-
     @GetMapping("/my-matches")
-    fun getMyMatches(@AuthenticationPrincipal userId: String): Mono<ResponseEntity<ApiResponse<List<MatchDto>>>> {
+    fun getMyMatches(
+        @AuthenticationPrincipal userId: String,
+    ): Mono<ResponseEntity<ApiResponse<List<MatchDto>>>> {
         return matchService.getMatchesByUser(userId)
             .map { it.toDto() }
             .collectList()
@@ -26,7 +25,9 @@ class MatchController(
     }
 
     @GetMapping("/active")
-    fun getActiveMatches(@AuthenticationPrincipal userId: String): Mono<ResponseEntity<ApiResponse<List<MatchDto>>>> {
+    fun getActiveMatches(
+        @AuthenticationPrincipal userId: String,
+    ): Mono<ResponseEntity<ApiResponse<List<MatchDto>>>> {
         return matchService.getActiveMatches(userId)
             .map { it.toDto() }
             .collectList()
@@ -36,7 +37,9 @@ class MatchController(
     }
 
     @GetMapping("/{id}")
-    fun getMatchById(@PathVariable id: String): Mono<ResponseEntity<ApiResponse<MatchDto>>> {
+    fun getMatchById(
+        @PathVariable id: String,
+    ): Mono<ResponseEntity<ApiResponse<MatchDto>>> {
         return matchService.getMatchesByUser(id)
             .next()
             .map { match ->
@@ -49,23 +52,25 @@ class MatchController(
     fun updateMatchStatus(
         @PathVariable id: String,
         @AuthenticationPrincipal userId: String,
-        @RequestBody request: UpdateMatchStatusRequest
+        @RequestBody request: UpdateMatchStatusRequest,
     ): Mono<ResponseEntity<ApiResponse<MatchDto>>> {
         return matchService.updateMatchStatus(id, request.status)
             .map { result ->
                 result.fold(
-                    success = { match ->
+                    onSuccess = { match ->
                         ApiResponse.success(match.toDto()).toResponseEntity()
                     },
-                    failure = { error ->
+                    onFailure = { error ->
                         ApiResponse.error<MatchDto>("Failed to update match status").toResponseEntity()
-                    }
+                    },
                 )
             }
     }
 
     @GetMapping("/stats")
-    fun getMatchStats(@AuthenticationPrincipal userId: String): Mono<ResponseEntity<ApiResponse<MatchStats>>> {
+    fun getMatchStats(
+        @AuthenticationPrincipal userId: String,
+    ): Mono<ResponseEntity<ApiResponse<MatchStats>>> {
         return matchService.getMatchStats(userId)
             .map { stats ->
                 ApiResponse.success(stats).toResponseEntity()
@@ -74,7 +79,7 @@ class MatchController(
 }
 
 data class UpdateMatchStatusRequest(
-    val status: String
+    val status: String,
 )
 
 data class MatchDto(
@@ -84,15 +89,16 @@ data class MatchDto(
     val listingId: String,
     val status: String,
     val createdAt: java.time.Instant,
-    val updatedAt: java.time.Instant
+    val updatedAt: java.time.Instant,
 )
 
-fun MatchEntity.toDto(): MatchDto = MatchDto(
-    id = this.id,
-    userId = this.userId,
-    landlordId = this.landlordId,
-    listingId = this.listingId,
-    status = this.status,
-    createdAt = this.createdAt,
-    updatedAt = this.updatedAt
-)
+fun MatchEntity.toDto(): MatchDto =
+    MatchDto(
+        id = this.id,
+        userId = this.userId,
+        landlordId = this.landlordId,
+        listingId = this.listingId,
+        status = this.status,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt,
+    )

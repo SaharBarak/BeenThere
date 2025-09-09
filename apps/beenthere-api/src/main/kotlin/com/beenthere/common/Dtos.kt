@@ -15,7 +15,7 @@ data class UserDto(
     val profileImageUrl: String? = null,
     val isVerified: Boolean = false,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 )
 
 data class ProfileDto(
@@ -29,40 +29,42 @@ data class ProfileDto(
     val profileImageUrl: String? = null,
     val isVerified: Boolean = false,
     val createdAt: Instant,
-    val updatedAt: Instant
+    val updatedAt: Instant,
 )
 
 data class SubscriptionDto(
     val status: String,
     val periodEnd: Instant? = null,
-    val planId: String? = null
+    val planId: String? = null,
 )
 
 // Extension functions
-fun UserEntity.toDto(): UserDto = UserDto(
-    id = this.id,
-    email = this.email,
-    firstName = this.firstName,
-    lastName = this.lastName,
-    phone = this.phone,
-    dateOfBirth = this.dateOfBirth,
-    bio = this.bio,
-    profileImageUrl = this.profileImageUrl,
-    isVerified = this.isVerified,
-    createdAt = this.createdAt,
-    updatedAt = this.updatedAt
-)
+fun UserEntity.toDto(): UserDto =
+    UserDto(
+        id = this.id,
+        email = this.email,
+        firstName = this.firstName,
+        lastName = this.lastName,
+        phone = this.phone,
+        dateOfBirth = this.dateOfBirth,
+        bio = this.bio,
+        profileImageUrl = this.profileImageUrl,
+        isVerified = this.isVerified,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt,
+    )
 
-fun UserEntity.toProfileDto(): ProfileDto = ProfileDto(
-    id = this.id,
-    email = this.email,
-    firstName = this.firstName,
-    lastName = this.lastName,
-    phone = this.phone,
-    dateOfBirth = this.dateOfBirth,
-    bio = this.bio,
-    profileImageUrl = this.profileImageUrl,
-    isVerified = this.isVerified,
-    createdAt = this.createdAt,
-    updatedAt = this.updatedAt
-)
+fun UserEntity.toProfileDto(): ProfileDto =
+    ProfileDto(
+        id = this.id,
+        email = this.email,
+        firstName = this.firstName,
+        lastName = this.lastName,
+        phone = this.phone,
+        dateOfBirth = this.dateOfBirth,
+        bio = this.bio,
+        profileImageUrl = this.profileImageUrl,
+        isVerified = this.isVerified,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt,
+    )

@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Primary
 
 @Configuration
 class ObjectMapperConfig {
-
     @Bean
     @Primary
     fun objectMapper(): ObjectMapper {

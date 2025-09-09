@@ -7,12 +7,10 @@ import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
 import java.nio.charset.StandardCharsets
-import java.security.Key
 import java.util.*
 import javax.crypto.SecretKey
 
@@ -23,38 +21,45 @@ class JwtService(
     @Value("\${jwt.access-token-expiration:900000}") // 15 minutes
     private val accessTokenExpiration: Long,
     @Value("\${jwt.refresh-token-expiration:604800000}") // 7 days
-    private val refreshTokenExpiration: Long
+    private val refreshTokenExpiration: Long,
 ) {
-    
     private val key: SecretKey = Keys.hmacShaKeyFor(secret.toByteArray(StandardCharsets.UTF_8))
 
-    fun generateTokens(userId: String, email: String): TokenPair {
+    fun generateTokens(
+        userId: String,
+        email: String,
+    ): TokenPair {
         val now = Date()
         val accessTokenExpiry = Date(now.time + accessTokenExpiration)
         val refreshTokenExpiry = Date(now.time + refreshTokenExpiration)
 
-        val accessToken = Jwts.builder()
-            .setSubject(userId)
-            .claim("email", email)
-            .claim("type", "access")
-            .setIssuedAt(now)
-            .setExpiration(accessTokenExpiry)
-            .signWith(key)
-            .compact()
+        val accessToken =
+            Jwts.builder()
+                .setSubject(userId)
+                .claim("email", email)
+                .claim("type", "access")
+                .setIssuedAt(now)
+                .setExpiration(accessTokenExpiry)
+                .signWith(key)
+                .compact()
 
-        val refreshToken = Jwts.builder()
-            .setSubject(userId)
-            .claim("email", email)
-            .claim("type", "refresh")
-            .setIssuedAt(now)
-            .setExpiration(refreshTokenExpiry)
-            .signWith(key)
-            .compact()
+        val refreshToken =
+            Jwts.builder()
+                .setSubject(userId)
+                .claim("email", email)
+                .claim("type", "refresh")
+                .setIssuedAt(now)
+                .setExpiration(refreshTokenExpiry)
+                .signWith(key)
+                .compact()
 
         return TokenPair(accessToken, refreshToken)
     }
 
-    fun generateToken(userId: String, email: String): String {
+    fun generateToken(
+        userId: String,
+        email: String,
+    ): String {
         val now = Date()
         val expiryDate = Date(now.time + accessTokenExpiration)
 
@@ -73,7 +78,7 @@ class JwtService(
             val claims = extractAllClaims(token)
             val userId = claims.subject
             val tokenType = claims["type"] as? String
-            
+
             if (userId != null && tokenType == "access" && !isTokenExpired(claims)) {
                 userId
             } else {
@@ -89,7 +94,7 @@ class JwtService(
             val claims = extractAllClaims(token)
             val userId = claims.subject
             val tokenType = claims["type"] as? String
-            
+
             if (userId != null && tokenType == "refresh" && !isTokenExpired(claims)) {
                 userId
             } else {
@@ -129,11 +134,11 @@ class JwtService(
     }
 
     private fun extractAllClaims(token: String): Claims {
-        return Jwts.parserBuilder()
-            .setSigningKey(key)
+        return Jwts.parser()
+            .verifyWith(key)
             .build()
-            .parseClaimsJws(token)
-            .body
+            .parseSignedClaims(token)
+            .payload
     }
 
     private fun isTokenExpired(claims: Claims): Boolean {
@@ -146,17 +151,18 @@ class JwtService(
             if (token != null) {
                 try {
                     val userId = validateToken(token)
-                    val auth = UsernamePasswordAuthenticationToken(
-                        userId,
-                        null,
-                        listOf(SimpleGrantedAuthority("ROLE_USER"))
-                    )
+                    val auth =
+                        UsernamePasswordAuthenticationToken(
+                            userId,
+                            null,
+                            listOf(SimpleGrantedAuthority("ROLE_USER")),
+                        )
                     Mono.just(auth)
                 } catch (e: Exception) {
-                    Mono.error(org.springframework.security.core.AuthenticationException("Invalid token") {})
+                    Mono.error(RuntimeException("Invalid token"))
                 }
             } else {
-                Mono.error(org.springframework.security.core.AuthenticationException("No token provided") {})
+                Mono.error(RuntimeException("No token provided"))
             }
         }
     }
@@ -164,5 +170,5 @@ class JwtService(
 
 data class TokenPair(
     val accessToken: String,
-    val refreshToken: String
+    val refreshToken: String,
 )

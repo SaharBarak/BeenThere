@@ -2,26 +2,23 @@ package com.beenthere.listing
 
 import com.beenthere.common.ApiResponse
 import com.beenthere.common.toResponseEntity
-import com.beenthere.listing.toDto
-import com.beenthere.error.ServiceError
 import com.beenthere.error.toApiResponse
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import jakarta.validation.Valid
 
 @RestController
 @RequestMapping("/listings")
 class ListingController(
-    private val listingService: ListingService
+    private val listingService: ListingService,
 ) {
-
     @PostMapping
     fun createListing(
         @AuthenticationPrincipal landlordId: String,
-        @Valid @RequestBody request: CreateListingRequest
+        @Valid @RequestBody request: CreateListingRequest,
     ): Mono<ResponseEntity<ApiResponse<ListingDto>>> {
         return listingService.createListing(landlordId, request)
             .map { result ->
@@ -31,7 +28,7 @@ class ListingController(
                     },
                     failure = { error ->
                         error.toApiResponse<ListingDto>().toResponseEntity()
-                    }
+                    },
                 )
             }
     }
@@ -47,21 +44,24 @@ class ListingController(
     }
 
     @GetMapping("/search")
-    fun searchListings(@RequestParam(required = false) city: String?,
-                      @RequestParam(required = false) state: String?,
-                      @RequestParam(required = false) minRent: java.math.BigDecimal?,
-                      @RequestParam(required = false) maxRent: java.math.BigDecimal?,
-                      @RequestParam(required = false) bedrooms: Int?,
-                      @RequestParam(required = false) propertyType: PropertyType?): Flux<ResponseEntity<ApiResponse<List<ListingDto>>>> {
-        val criteria = SearchCriteria(
-            city = city,
-            state = state,
-            minRent = minRent,
-            maxRent = maxRent,
-            bedrooms = bedrooms,
-            propertyType = propertyType
-        )
-        
+    fun searchListings(
+        @RequestParam(required = false) city: String?,
+        @RequestParam(required = false) state: String?,
+        @RequestParam(required = false) minRent: java.math.BigDecimal?,
+        @RequestParam(required = false) maxRent: java.math.BigDecimal?,
+        @RequestParam(required = false) bedrooms: Int?,
+        @RequestParam(required = false) propertyType: PropertyType?,
+    ): Flux<ResponseEntity<ApiResponse<List<ListingDto>>>> {
+        val criteria =
+            SearchCriteria(
+                city = city,
+                state = state,
+                minRent = minRent,
+                maxRent = maxRent,
+                bedrooms = bedrooms,
+                propertyType = propertyType,
+            )
+
         return listingService.searchListings(criteria)
             .map { it.toDto() }
             .collectList()
@@ -71,7 +71,9 @@ class ListingController(
     }
 
     @GetMapping("/{id}")
-    fun getListingById(@PathVariable id: String): Mono<ResponseEntity<ApiResponse<ListingDto>>> {
+    fun getListingById(
+        @PathVariable id: String,
+    ): Mono<ResponseEntity<ApiResponse<ListingDto>>> {
         return listingService.findById(id)
             .map { result ->
                 result.fold(
@@ -80,13 +82,15 @@ class ListingController(
                     },
                     failure = { error ->
                         error.toApiResponse<ListingDto>().toResponseEntity()
-                    }
+                    },
                 )
             }
     }
 
     @GetMapping("/my-listings")
-    fun getMyListings(@AuthenticationPrincipal landlordId: String): Flux<ResponseEntity<ApiResponse<List<ListingDto>>>> {
+    fun getMyListings(
+        @AuthenticationPrincipal landlordId: String,
+    ): Flux<ResponseEntity<ApiResponse<List<ListingDto>>>> {
         return listingService.findByLandlordId(landlordId)
             .map { it.toDto() }
             .collectList()
@@ -99,7 +103,7 @@ class ListingController(
     fun updateListing(
         @PathVariable id: String,
         @AuthenticationPrincipal landlordId: String,
-        @Valid @RequestBody request: UpdateListingRequest
+        @Valid @RequestBody request: UpdateListingRequest,
     ): Mono<ResponseEntity<ApiResponse<ListingDto>>> {
         return listingService.updateListing(id, landlordId, request)
             .map { result ->
@@ -109,7 +113,7 @@ class ListingController(
                     },
                     failure = { error ->
                         error.toApiResponse<ListingDto>().toResponseEntity()
-                    }
+                    },
                 )
             }
     }
@@ -117,17 +121,17 @@ class ListingController(
     @DeleteMapping("/{id}")
     fun deactivateListing(
         @PathVariable id: String,
-        @AuthenticationPrincipal landlordId: String
+        @AuthenticationPrincipal landlordId: String,
     ): Mono<ResponseEntity<ApiResponse<Unit>>> {
         return listingService.deactivateListing(id, landlordId)
             .map { result ->
                 result.fold(
-                    success = { 
+                    success = {
                         ApiResponse.success(Unit).toResponseEntity()
                     },
                     failure = { error ->
                         error.toApiResponse<Unit>().toResponseEntity()
-                    }
+                    },
                 )
             }
     }
@@ -162,37 +166,38 @@ data class ListingDto(
     val leaseDurationMonths: Int? = null,
     val images: List<String> = emptyList(),
     val createdAt: java.time.Instant,
-    val updatedAt: java.time.Instant
+    val updatedAt: java.time.Instant,
 )
 
-fun ListingEntity.toDto(): ListingDto = ListingDto(
-    id = this.id,
-    landlordId = this.landlordId,
-    title = this.title,
-    description = this.description,
-    address = this.address,
-    city = this.city,
-    state = this.state,
-    zipCode = this.zipCode,
-    latitude = this.latitude,
-    longitude = this.longitude,
-    rentAmount = this.rentAmount,
-    depositAmount = this.depositAmount,
-    bedrooms = this.bedrooms,
-    bathrooms = this.bathrooms,
-    squareFeet = this.squareFeet,
-    propertyType = this.propertyType,
-    furnished = this.furnished,
-    petFriendly = this.petFriendly,
-    smokingAllowed = this.smokingAllowed,
-    utilitiesIncluded = this.utilitiesIncluded,
-    parkingAvailable = this.parkingAvailable,
-    laundryAvailable = this.laundryAvailable,
-    gymAvailable = this.gymAvailable,
-    poolAvailable = this.poolAvailable,
-    availableDate = this.availableDate,
-    leaseDurationMonths = this.leaseDurationMonths,
-    images = this.images,
-    createdAt = this.createdAt,
-    updatedAt = this.updatedAt
-)
+fun ListingEntity.toDto(): ListingDto =
+    ListingDto(
+        id = this.id,
+        landlordId = this.landlordId,
+        title = this.title,
+        description = this.description,
+        address = this.address,
+        city = this.city,
+        state = this.state,
+        zipCode = this.zipCode,
+        latitude = this.latitude,
+        longitude = this.longitude,
+        rentAmount = this.rentAmount,
+        depositAmount = this.depositAmount,
+        bedrooms = this.bedrooms,
+        bathrooms = this.bathrooms,
+        squareFeet = this.squareFeet,
+        propertyType = this.propertyType,
+        furnished = this.furnished,
+        petFriendly = this.petFriendly,
+        smokingAllowed = this.smokingAllowed,
+        utilitiesIncluded = this.utilitiesIncluded,
+        parkingAvailable = this.parkingAvailable,
+        laundryAvailable = this.laundryAvailable,
+        gymAvailable = this.gymAvailable,
+        poolAvailable = this.poolAvailable,
+        availableDate = this.availableDate,
+        leaseDurationMonths = this.leaseDurationMonths,
+        images = this.images,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt,
+    )
