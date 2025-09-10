@@ -1,0 +1,98 @@
+{
+  "listingCard": {
+    "id": "550e8400-e29b-41d4-a716-446655440040",
+    "ownerUserId": "550e8400-e29b-41d4-a716-446655440010",
+    "placeId": "550e8400-e29b-41d4-a716-446655440001",
+    "title": "רחוב רוטשילד 12, תל אביב-יפו",
+    "price": 8500,
+    "attrs": {
+      "rooms": 3,
+      "bathrooms": 1,
+      "furnished": true,
+      "pets": false,
+      "smoking": false,
+      "balcony": true,
+      "parking": false,
+      "elevator": true
+    },
+    "photos": [
+      "https://example.com/photos/apt1_living.jpg",
+      "https://example.com/photos/apt1_kitchen.jpg",
+      "https://example.com/photos/apt1_bedroom.jpg"
+    ],
+    "createdAt": "2024-12-01T10:00:00Z",
+    "autoAccept": false
+  },
+  "apartmentsFeedRes": {
+    "items": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440040",
+        "ownerUserId": "550e8400-e29b-41d4-a716-446655440010",
+        "placeId": "550e8400-e29b-41d4-a716-446655440001",
+        "title": "רחוב רוטשילד 12, תל אביב-יפו",
+        "price": 8500,
+        "attrs": {
+          "rooms": 3,
+          "furnished": true,
+          "pets": false,
+          "smoking": false
+        },
+        "photos": [
+          "https://example.com/photos/apt1_living.jpg",
+          "https://example.com/photos/apt1_kitchen.jpg"
+        ],
+        "createdAt": "2024-12-01T10:00:00Z",
+        "autoAccept": false
+      },
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440041",
+        "ownerUserId": "550e8400-e29b-41d4-a716-446655440011",
+        "placeId": "550e8400-e29b-41d4-a716-446655440002",
+        "title": "רחוב אלנבי 45, תל אביב-יפו",
+        "price": 4200,
+        "attrs": {
+          "rooms": 1,
+          "furnished": false,
+          "pets": true,
+          "smoking": false
+        },
+        "photos": [
+          "https://example.com/photos/apt2_main.jpg"
+        ],
+        "createdAt": "2024-12-01T11:30:00Z",
+        "autoAccept": true
+      }
+    ],
+    "nextCursor": "eyJ0aW1lc3RhbXAiOjE3MDE0Mjk4MDAsImlkIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDQxIn0="
+  },
+  "createListingReq": {
+    "placeId": "550e8400-e29b-41d4-a716-446655440001",
+    "price": 8500,
+    "attrs": {
+      "rooms": 3,
+      "bathrooms": 1,
+      "furnished": true,
+      "pets": false,
+      "smoking": false,
+      "balcony": true,
+      "parking": false,
+      "elevator": true
+    },
+    "photos": [
+      "https://example.com/photos/apt1_living.jpg",
+      "https://example.com/photos/apt1_kitchen.jpg",
+      "https://example.com/photos/apt1_bedroom.jpg"
+    ],
+    "autoAccept": false
+  },
+  "createListingRes": {
+    "id": "550e8400-e29b-41d4-a716-446655440040"
+  },
+  "listingSwipeReq": {
+    "listingId": "550e8400-e29b-41d4-a716-446655440040",
+    "action": "LIKE"
+  },
+  "listingSwipeRes": {
+    "matchId": "550e8400-e29b-41d4-a716-446655440050"
+  }
+}

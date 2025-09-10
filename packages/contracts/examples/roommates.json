@@ -1,0 +1,68 @@
+{
+  "roommateFeedRes": {
+    "items": [
+      {
+        "userId": "550e8400-e29b-41d4-a716-446655440010",
+        "displayName": "יוסי",
+        "photoUrl": "https://example.com/photos/yossi.jpg",
+        "bio": "סטודנט להנדסה, אוהב בישול ומוזיקה",
+        "prefs": {
+          "pets": false,
+          "smoking": false,
+          "schedule": "morning_person"
+        },
+        "hasApartment": true
+      },
+      {
+        "userId": "550e8400-e29b-41d4-a716-446655440011",
+        "displayName": "שרה",
+        "bio": "מעצבת גרפית, מחפשת מקום שקט ללמוד",
+        "hasApartment": false
+      }
+    ],
+    "nextCursor": "eyJ0aW1lc3RhbXAiOjE2NzAyNTc2MDAsImlkIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDExIn0="
+  },
+  "swipeReq": {
+    "targetUserId": "550e8400-e29b-41d4-a716-446655440010",
+    "action": "LIKE"
+  },
+  "swipeRes": {
+    "matchId": "550e8400-e29b-41d4-a716-446655440020"
+  },
+  "matchesRes": {
+    "matches": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440020",
+        "otherUserId": "550e8400-e29b-41d4-a716-446655440010",
+        "otherUserName": "יוסי",
+        "otherUserPhotoUrl": "https://example.com/photos/yossi.jpg",
+        "createdAt": "2024-12-01T15:30:00Z",
+        "lastMessageAt": "2024-12-01T16:45:00Z",
+        "lastMessage": "היי! איך דברים?"
+      }
+    ]
+  },
+  "messagesRes": {
+    "items": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440030",
+        "senderUserId": "550e8400-e29b-41d4-a716-446655440010",
+        "body": "היי! איך דברים?",
+        "createdAt": "2024-12-01T16:45:00Z"
+      },
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440031",
+        "senderUserId": "550e8400-e29b-41d4-a716-446655440011",
+        "body": "שלום! הכל טוב, תודה. אתה עדיין מחפש שותף?",
+        "createdAt": "2024-12-01T16:47:00Z"
+      }
+    ],
+    "nextCursor": "eyJ0aW1lc3RhbXAiOjE3MDE0MzkyMjAsImlkIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDMxIn0="
+  },
+  "sendMessageReq": {
+    "body": "בטח! בואי נקבע פגישה השבוע"
+  },
+  "sendMessageRes": {
+    "id": "550e8400-e29b-41d4-a716-446655440032"
+  }
+}

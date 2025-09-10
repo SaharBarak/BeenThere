@@ -1,0 +1,56 @@
+{
+  "placeSnapReq": {
+    "googlePlaceId": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+    "formattedAddress": "Tel Aviv-Yafo, Israel",
+    "lat": 32.0853,
+    "lng": 34.7818
+  },
+  "placeSnapRes": {
+    "placeId": "550e8400-e29b-41d4-a716-446655440001"
+  },
+  "placeProfileRes": {
+    "place": {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "googlePlaceId": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+      "formattedAddress": "Tel Aviv-Yafo, Israel",
+      "lat": 32.0853,
+      "lng": 34.7818
+    },
+    "ratings": {
+      "counts": {
+        "landlord": 12,
+        "apartment": 18
+      },
+      "averages": {
+        "landlord": 6.8,
+        "apartment": 6.2,
+        "extras": {
+          "neighborsNoise": 5.7,
+          "neighSafety": 7.1
+        }
+      },
+      "recent": [
+        {
+          "at": "2024-12-01T10:20:00Z",
+          "landlordScores": {
+            "fairness": 7,
+            "response": 5,
+            "maintenance": 6,
+            "privacy": 8
+          },
+          "apartmentScores": {
+            "condition": 6,
+            "noise": 4,
+            "utilities": 7,
+            "sunlightMold": 5
+          },
+          "extras": {
+            "neighborsNoise": 6,
+            "neighSafety": 7
+          },
+          "comment": "בסדר גמור, לפעמים איטי בתיקונים."
+        }
+      ]
+    }
+  }
+}

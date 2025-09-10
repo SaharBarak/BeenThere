@@ -1,0 +1,54 @@
+{
+  "createRantCombinedReq": {
+    "landlordPhone": "+972501234567",
+    "periodStart": "2024-01-01",
+    "periodEnd": "2024-12-31",
+    "isCurrentResidence": true,
+    "landlordScores": {
+      "fairness": 7,
+      "response": 5,
+      "maintenance": 6,
+      "privacy": 8
+    },
+    "apartmentScores": {
+      "condition": 6,
+      "noise": 4,
+      "utilities": 7,
+      "sunlightMold": 5
+    },
+    "extras": {
+      "neighborsNoise": 6,
+      "roofCommon": 7,
+      "elevatorSolar": 6,
+      "neighSafety": 7,
+      "neighServices": 8,
+      "neighTransit": 7,
+      "priceFairness": 6
+    },
+    "comment": "בסדר גמור, לפעמים איטי בתיקונים.",
+    "place": {
+      "googlePlaceId": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+      "formattedAddress": "Tel Aviv-Yafo, Israel"
+    }
+  },
+  "createRantCombinedRes": {
+    "rantGroupId": "550e8400-e29b-41d4-a716-446655440002"
+  },
+  "createRoommateRantReq": {
+    "rateeHint": {
+      "name": "דני",
+      "org": "טכניון"
+    },
+    "scores": {
+      "cleanliness": 6,
+      "communication": 8,
+      "reliability": 7,
+      "respect": 8,
+      "costSharing": 7
+    },
+    "comment": "אחלה, רק לשטוף כלים יותר מהר"
+  },
+  "createRoommateRantRes": {
+    "ratingId": "550e8400-e29b-41d4-a716-446655440003"
+  }
+}
