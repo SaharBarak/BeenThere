@@ -1,0 +1,120 @@
+# BeenThere API Configuration
+server:
+  port: 8080
+
+spring:
+  application:
+    name: beenthere-api
+
+  # R2DBC Configuration (Reactive)
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/beenthere
+    username: ${DB_USERNAME:beenthere}
+    password: ${DB_PASSWORD:beenthere}
+
+  # JDBC Configuration (Flyway migrations only)
+  datasource:
+    url: jdbc:postgresql://localhost:5432/beenthere
+    username: ${DB_USERNAME:beenthere}
+    password: ${DB_PASSWORD:beenthere}
+
+  # Flyway Configuration
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # Security Configuration (MVP: permit all)
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${GOOGLE_ISSUER_URI:https://accounts.google.com}
+
+# Management/Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    org.springframework.r2dbc: DEBUG
+    org.flywaydb: INFO
+    com.beenthere: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  # Dev-specific database (could use testcontainers or embedded)
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/beenthere_dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/beenthere_dev
+
+  # Security: permit all for development
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Disable JWT validation in dev
+          issuer-uri: ""
+
+# More verbose logging in dev
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.r2dbc: TRACE
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+# Production logging: structured JSON
+logging:
+  level:
+    org.springframework.r2dbc: INFO
+    org.flywaydb: WARN
+    com.beenthere: INFO
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+# Mock Profile (for testing with mock adapters)
+spring:
+  config:
+    activate:
+      on-profile: mock
+
+# Use embedded H2 for mocking
+  r2dbc:
+    url: r2dbc:h2:mem:///testdb
+    username: sa
+    password: ""
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: ""
+
+# Disable Flyway for mock profile
+  flyway:
+    enabled: false
