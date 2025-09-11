@@ -24,7 +24,8 @@ Build **both** frontends and a **single backend monolith**:
 - **Apartments feed & swiping** (separate from map): SEEK-paginated listing cards; LIKE/PASS on listings; match if `autoAccept=true` or owner already liked the seeker. (Messaging via unified matches API.)
 - **Landlords can list apartments** (any authenticated user can create a listing; the creator is the owner).  
 - Hebrew UI (he-IL, RTL), mobile-first microcopy.
-- Optional subscription flag (₪20/month) stubs for gating swipes/messages (no live billing in MVP).
+- Optional subscription flag (₪2
+  0/month) stubs for gating swipes/messages (no live billing in MVP).
 
 **Do not “vibe code”.** Every architecture change needs a **design note** (see §13) and explicit approval.
 

@@ -6,6 +6,11 @@ spring:
   application:
     name: beenthere-api
 
+# BeenThere Security Configuration
+beenthere:
+  security:
+    phone-hash-secret: ${PHONE_HASH_SECRET:dev-secret-change-in-production}
+
   # R2DBC Configuration (Reactive)
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/beenthere
