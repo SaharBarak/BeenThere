@@ -54,6 +54,23 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
+    // AWS S3 SDK v2
+    implementation("software.amazon.awssdk:s3:2.28.25")
+    implementation("software.amazon.awssdk:auth:2.28.25")
+
+    // Stripe Java SDK
+    implementation("com.stripe:stripe-java:29.4.0")
+
+    // Google Auth library
+    implementation("com.google.api-client:google-api-client:2.7.0")
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.32.0")
+    
+    // Retrofit for HTTP clients
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-jackson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
     // Observability
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 

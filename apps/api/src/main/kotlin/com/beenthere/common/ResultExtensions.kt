@@ -1,105 +1,77 @@
 package com.beenthere.common
 
-import com.github.michaelbull.result.Result
-import com.github.michaelbull.result.mapError
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.reactive.function.server.ServerResponse
 import reactor.core.publisher.Mono
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 
 /**
- * Extensions for Result monad integration with Spring WebFlux.
- * Maps service layer Result<T, ServiceError> to HTTP responses.
+ * Extension functions for working with Kotlin Result in Spring WebFlux
  */
 
 /**
- * Convert ServiceError to appropriate HTTP status code
+ * Convert a Result to a Mono
  */
-fun ServiceError.toHttpStatus(): HttpStatus = when (this) {
-    is ServiceError.ValidationError,
-    is ServiceError.InvalidInput -> HttpStatus.BAD_REQUEST
-    
-    is ServiceError.AuthenticationRequired,
-    is ServiceError.InvalidCredentials -> HttpStatus.UNAUTHORIZED
-    
-    is ServiceError.InsufficientPermissions,
-    is ServiceError.SubscriptionRequired -> HttpStatus.FORBIDDEN
-    
-    is ServiceError.NotFound -> HttpStatus.NOT_FOUND
-    
-    is ServiceError.AlreadyExists,
-    is ServiceError.ConcurrentModification -> HttpStatus.CONFLICT
-    
-    is ServiceError.BusinessRuleViolation -> HttpStatus.UNPROCESSABLE_ENTITY
-    
-    is ServiceError.RateLimitExceeded -> HttpStatus.TOO_MANY_REQUESTS
-    
-    is ServiceError.DatabaseError,
-    is ServiceError.ExternalServiceError,
-    is ServiceError.InternalError -> HttpStatus.INTERNAL_SERVER_ERROR
+fun <T> Result<T>.toMono(): Mono<T> = fold(
+    onSuccess = { value -> if (value != null) Mono.just(value) else Mono.empty() },
+    onFailure = { Mono.error(it) }
+)
+
+/**
+ * Convert a Mono to a Result using coroutines
+ */
+suspend fun <T> Mono<T>.toResult(): Result<T> = try {
+    val result = this.awaitSingleOrNull()
+    if (result != null) Result.success(result) else Result.failure(RuntimeException("Mono was empty"))
+} catch (e: Exception) {
+    Result.failure(e)
 }
 
 /**
- * Error response body for API consistency
+ * Map ServiceError to appropriate HTTP status and response
+ */
+fun ServiceError.toResponseEntity(): ResponseEntity<ErrorResponse> {
+    val status = when (this) {
+        is ServiceError.PlaceNotFound -> HttpStatus.NOT_FOUND
+        is ServiceError.UserNotFound -> HttpStatus.NOT_FOUND
+        is ServiceError.ValidationError -> HttpStatus.BAD_REQUEST
+        is ServiceError.PhoneValidationError -> HttpStatus.BAD_REQUEST
+        is ServiceError.InvalidGoogleToken -> HttpStatus.UNAUTHORIZED
+        is ServiceError.RateLimitExceeded -> HttpStatus.TOO_MANY_REQUESTS
+        is ServiceError.PlaceLookupFailed -> HttpStatus.BAD_GATEWAY
+        is ServiceError.ExternalServiceError -> HttpStatus.BAD_GATEWAY
+        is ServiceError.DatabaseError -> HttpStatus.INTERNAL_SERVER_ERROR
+    }
+
+    return ResponseEntity.status(status).body(
+        ErrorResponse(
+            code = this.code,
+            message = this.message,
+            timestamp = java.time.Instant.now().toString()
+        )
+    )
+}
+
+/**
+ * Error response DTO
  */
 data class ErrorResponse(
-    val error: String,
-    val message: String,
     val code: String,
-    val timestamp: String = java.time.Instant.now().toString()
+    val message: String,
+    val timestamp: String
 )
 
 /**
- * Convert ServiceError to ErrorResponse
+ * Extension to convert Result to ResponseEntity for controllers
  */
-fun ServiceError.toErrorResponse(): ErrorResponse = ErrorResponse(
-    error = this.toHttpStatus().reasonPhrase,
-    message = this.message,
-    code = this.code
-)
-
-/**
- * Convert Result<T, ServiceError> to ResponseEntity<T>
- * Usage: service.doSomething().toResponseEntity()
- */
-fun <T> Result<T, ServiceError>.toResponseEntity(): ResponseEntity<*> = when {
-    this.isOk -> ResponseEntity.ok(this.value)
-    else -> {
-        val error = this.error
-        ResponseEntity
-            .status(error.toHttpStatus())
-            .body(error.toErrorResponse())
-    }
-}
-
-/**
- * Convert Result<T, ServiceError> to Mono<ResponseEntity<*>>
- * Usage in WebFlux controllers: service.doSomething().toMonoResponse()
- */
-fun <T> Result<T, ServiceError>.toMonoResponse(): Mono<ResponseEntity<*>> = 
-    Mono.just(this.toResponseEntity())
-
-/**
- * Convert Result<T, ServiceError> to Mono<ServerResponse>
- * Usage in functional routing: service.doSomething().toServerResponse()
- */
-fun <T: Any> Result<T, ServiceError>.toServerResponse(): Mono<ServerResponse> = when {
-    this.isOk -> ServerResponse.ok().bodyValue(this.value as Any)
-    else -> {
-        val error = this.error
-        ServerResponse
-            .status(error.toHttpStatus())
-            .bodyValue(error.toErrorResponse())
-    }
-}
-
-/**
- * Wrap exceptions as ServiceError.InternalError
- */
-fun <T> Result<T, Throwable>.mapToServiceError(): Result<T, ServiceError> =
-    this.mapError { throwable ->
-        when (throwable) {
-            is ServiceError -> throwable
-            else -> ServiceError.InternalError("Unexpected error: ${throwable.message}")
+fun <T> Result<T>.toResponseEntity(
+    successStatus: HttpStatus = HttpStatus.OK
+): ResponseEntity<*> = fold(
+    onSuccess = { ResponseEntity.status(successStatus).body(it) },
+    onFailure = { ex ->
+        when (ex) {
+            is ServiceError -> ex.toResponseEntity()
+            else -> ServiceError.DatabaseError(ex).toResponseEntity()
         }
     }
+)

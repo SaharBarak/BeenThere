@@ -8,7 +8,12 @@ import java.util.*
 
 @Table("landlords")
 data class LandlordEntity(
-    @Id val id: UUID = UUID.randomUUID(),
-    @Column("phone_hash") val phoneHash: String, // HMAC-SHA256 of E.164 phone
-    @Column("created_at") val createdAt: Instant = Instant.now()
+    @Id
+    val id: UUID? = null,
+    
+    @Column("phone_hash")
+    val phoneHash: String,
+    
+    @Column("created_at")
+    val createdAt: Instant = Instant.now()
 )

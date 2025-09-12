@@ -1,81 +1,160 @@
 package com.beenthere.services
 
 import com.beenthere.common.ServiceError
+import com.beenthere.dto.common.PlaceRef
+import com.beenthere.dto.places.*
 import com.beenthere.entities.PlaceEntity
-import com.beenthere.repositories.PlaceRepository
+// import com.beenthere.gateways.GooglePlacesGateway // Not used for now
+import com.beenthere.repositories.*
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.github.michaelbull.result.*
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 import java.util.*
-
-data class PlaceRef(
-    val googlePlaceId: String? = null,
-    val formattedAddress: String? = null,
-    val lat: Double? = null,
-    val lng: Double? = null
-)
 
 @Service
 class PlaceService(
+    // private val googlePlacesGateway: GooglePlacesGateway, // Not used for now
     private val placeRepository: PlaceRepository,
+    private val rantGroupRepository: RantGroupRepository,
+    private val ratingLandlordRepository: RatingLandlordRepository,
+    private val ratingApartmentRepository: RatingApartmentRepository,
     private val objectMapper: ObjectMapper
 ) {
     
-    /**
-     * Get or create a place from PlaceRef.
-     * Used by rant creation to ensure place exists.
-     */
-    suspend fun getOrCreatePlace(placeRef: PlaceRef): Result<PlaceEntity, ServiceError> {
-        // Validate input
-        if (placeRef.googlePlaceId.isNullOrBlank() && (placeRef.lat == null || placeRef.lng == null)) {
-            return Err(ServiceError.ValidationError("place", "Must provide either googlePlaceId or both lat/lng coordinates"))
-        }
-        
+    @Transactional
+    suspend fun snapPlace(req: PlaceSnapReq): Result<PlaceSnapRes> {
         return try {
-            // Try to find existing place by Google Place ID
-            if (!placeRef.googlePlaceId.isNullOrBlank()) {
-                placeRepository.findByGooglePlaceId(placeRef.googlePlaceId)?.let { existing ->
-                    return Ok(existing)
+            // First check if place already exists by googlePlaceId
+            if (req.googlePlaceId != null) {
+                val existingPlace = placeRepository.findByGooglePlaceId(req.googlePlaceId)
+                if (existingPlace != null) {
+                    return Result.success(PlaceSnapRes(placeId = existingPlace.id.toString()))
                 }
             }
             
-            // Try to find by coordinates if available
-            if (placeRef.lat != null && placeRef.lng != null) {
-                placeRepository.findByCoordinatesWithTolerance(placeRef.lat, placeRef.lng)?.let { existing ->
-                    return Ok(existing)
+            // If we have coordinates, check for existing place nearby
+            if (req.lat != null && req.lng != null) {
+                val nearbyPlace = placeRepository.findNearbyPlace(req.lat, req.lng, 0.001) // ~100m radius
+                if (nearbyPlace != null) {
+                    return Result.success(PlaceSnapRes(placeId = nearbyPlace.id.toString()))
                 }
             }
             
             // Create new place
             val newPlace = PlaceEntity(
-                googlePlaceId = placeRef.googlePlaceId,
-                formattedAddress = placeRef.formattedAddress,
-                lat = placeRef.lat,
-                lng = placeRef.lng,
-                attrs = null // No additional attributes in MVP
+                googlePlaceId = req.googlePlaceId,
+                formattedAddress = req.formattedAddress,
+                lat = req.lat,
+                lng = req.lng,
+                attrs = null // No additional attributes for now
             )
             
             val savedPlace = placeRepository.save(newPlace)
-            Ok(savedPlace)
+            Result.success(PlaceSnapRes(placeId = savedPlace.id.toString()))
             
         } catch (e: Exception) {
-            Err(ServiceError.DatabaseError("Failed to get or create place", e))
+            Result.failure(ServiceError.DatabaseError(e))
         }
     }
     
-    /**
-     * Get place by ID.
-     */
-    suspend fun getPlaceById(id: UUID): Result<PlaceEntity, ServiceError> {
+    suspend fun getPlaceProfile(placeId: UUID): Result<PlaceProfileRes> {
         return try {
-            val place = placeRepository.findById(id)
-            if (place != null) {
-                Ok(place)
-            } else {
-                Err(ServiceError.NotFound("place", id.toString()))
+            // Get place
+            val place = placeRepository.findById(placeId)
+                ?: return Result.failure(ServiceError.PlaceNotFound(placeId.toString()))
+            
+            // Get all rant groups for this place
+            val rantGroups = rantGroupRepository.findByPlaceId(placeId)
+            
+            // Get ratings for these rant groups
+            val landlordRatings = ratingLandlordRepository.findByRantGroupIdIn(rantGroups.map { it.id!! })
+            val apartmentRatings = ratingApartmentRepository.findByRantGroupIdIn(rantGroups.map { it.id!! })
+            
+            // Calculate counts
+            val landlordCount = landlordRatings.size
+            val apartmentCount = apartmentRatings.size
+            
+            // Calculate averages
+            val landlordAverage = if (landlordCount > 0) {
+                landlordRatings.map { rating ->
+                    val scores = objectMapper.convertValue(rating.scores, LandlordScores::class.java)
+                    (scores.fairness + scores.response + scores.maintenance + scores.privacy) / 4.0
+                }.average()
+            } else null
+            
+            val apartmentAverage = if (apartmentCount > 0) {
+                apartmentRatings.map { rating ->
+                    val scores = objectMapper.convertValue(rating.scores, ApartmentScores::class.java)
+                    (scores.condition + scores.noise + scores.utilities + scores.sunlightMold) / 4.0
+                }.average()
+            } else null
+            
+            // Calculate extras averages
+            val extrasAverages = mutableMapOf<String, Double>()
+            apartmentRatings.forEach { rating ->
+                if (rating.extras != null) {
+                    val extras = objectMapper.convertValue(rating.extras, Extras::class.java)
+                    extras.neighborsNoise?.let { addToAverage(extrasAverages, "neighborsNoise", it.toDouble()) }
+                    extras.roofCommon?.let { addToAverage(extrasAverages, "roofCommon", it.toDouble()) }
+                    extras.elevatorSolar?.let { addToAverage(extrasAverages, "elevatorSolar", it.toDouble()) }
+                    extras.neighSafety?.let { addToAverage(extrasAverages, "neighSafety", it.toDouble()) }
+                    extras.neighServices?.let { addToAverage(extrasAverages, "neighServices", it.toDouble()) }
+                    extras.neighTransit?.let { addToAverage(extrasAverages, "neighTransit", it.toDouble()) }
+                    extras.priceFairness?.let { addToAverage(extrasAverages, "priceFairness", it.toDouble()) }
+                }
             }
+            
+            // Get recent ratings (last 10)
+            val recentRantGroups = rantGroups.sortedByDescending { it.createdAt }.take(10)
+            val recentRatings = recentRantGroups.map { rantGroup ->
+                val landlordRating = landlordRatings.find { it.rantGroupId == rantGroup.id }
+                val apartmentRating = apartmentRatings.find { it.rantGroupId == rantGroup.id }
+                
+                RecentRating(
+                    at = rantGroup.createdAt.toString(),
+                    landlordScores = landlordRating?.let { 
+                        objectMapper.convertValue(it.scores, LandlordScores::class.java)
+                    },
+                    apartmentScores = apartmentRating?.let {
+                        objectMapper.convertValue(it.scores, ApartmentScores::class.java)
+                    },
+                    extras = apartmentRating?.extras?.let {
+                        objectMapper.convertValue(it, Extras::class.java)
+                    },
+                    comment = rantGroup.comment
+                )
+            }
+            
+            Result.success(PlaceProfileRes(
+                place = Place(
+                    id = place.id.toString(),
+                    googlePlaceId = place.googlePlaceId,
+                    formattedAddress = place.formattedAddress,
+                    lat = place.lat,
+                    lng = place.lng
+                ),
+                ratings = PlaceRatings(
+                    counts = RatingCounts(
+                        landlord = landlordCount,
+                        apartment = apartmentCount
+                    ),
+                    averages = RatingAverages(
+                        landlord = landlordAverage,
+                        apartment = apartmentAverage,
+                        extras = extrasAverages.takeIf { it.isNotEmpty() }
+                    ),
+                    recent = recentRatings
+                )
+            ))
+            
         } catch (e: Exception) {
-            Err(ServiceError.DatabaseError("Failed to get place", e))
+            Result.failure(ServiceError.DatabaseError(e))
         }
+    }
+    
+    private fun addToAverage(averages: MutableMap<String, Double>, key: String, value: Double) {
+        val current = averages[key] ?: 0.0
+        averages[key] = (current + value) / 2.0
     }
 }

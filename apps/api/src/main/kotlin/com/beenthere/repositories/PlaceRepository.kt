@@ -3,27 +3,21 @@ package com.beenthere.repositories
 import com.beenthere.entities.PlaceEntity
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
+import org.springframework.data.repository.kotlin.CoroutineSortingRepository
 import org.springframework.stereotype.Repository
 import java.util.*
 
 @Repository
-interface PlaceRepository : CoroutineCrudRepository<PlaceEntity, UUID> {
-    
-    /**
-     * Find place by Google Place ID.
-     * Used for place snapping and deduplication.
-     */
+interface PlaceRepository : CoroutineCrudRepository<PlaceEntity, UUID>, CoroutineSortingRepository<PlaceEntity, UUID> {
     suspend fun findByGooglePlaceId(googlePlaceId: String): PlaceEntity?
+    suspend fun findByLatAndLng(lat: Double, lng: Double): PlaceEntity?
     
-    /**
-     * Find place by coordinates with tolerance.
-     * Used for matching places when Google Place ID is not available.
-     */
+    // Custom query to find nearby places within a radius (approximate using lat/lng bounds)
     @Query("""
         SELECT * FROM places 
-        WHERE ABS(lat - :lat) < 0.0001 AND ABS(lng - :lng) < 0.0001
-        ORDER BY (ABS(lat - :lat) + ABS(lng - :lng)) ASC
+        WHERE lat BETWEEN :lat - :radius AND :lat + :radius
+        AND lng BETWEEN :lng - :radius AND :lng + :radius
         LIMIT 1
     """)
-    suspend fun findByCoordinatesWithTolerance(lat: Double, lng: Double): PlaceEntity?
+    suspend fun findNearbyPlace(lat: Double, lng: Double, radius: Double): PlaceEntity?
 }

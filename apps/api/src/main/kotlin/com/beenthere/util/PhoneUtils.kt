@@ -1,106 +1,102 @@
 package com.beenthere.util
 
-import com.github.michaelbull.result.*
 import com.beenthere.common.ServiceError
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.security.MessageDigest
+import java.nio.charset.StandardCharsets
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Phone number utilities for E.164 normalization and HMAC hashing.
- * Ensures PII protection by never storing raw phone numbers.
+ * Utilities for phone number handling, normalization, and hashing
+ * Following CLAUDE.md requirements for PII protection: never store raw phone numbers
+ * Store only HMAC-SHA256(E.164, secret)
  */
 @Component
 class PhoneUtils(
-    @Value("\${beenthere.security.phone-hash-secret}")
+    @Value("\${beenthere.phone.hash-secret}")
     private val phoneHashSecret: String
 ) {
-    
+
     /**
-     * Normalize phone number to E.164 format.
-     * Supports Israeli phone numbers and international format.
+     * Normalize phone number to E.164 format
+     * E.164 format: +[country code][area code][local number]
      */
-    fun normalizeToE164(phone: String): Result<String, ServiceError.ValidationError> {
-        val cleaned = phone.replace(Regex("[^+\\d]"), "")
-        
-        return when {
-            // Already in E.164 format
-            cleaned.startsWith("+") && cleaned.length >= 10 -> {
-                if (isValidE164(cleaned)) {
-                    Ok(cleaned)
-                } else {
-                    Err(ServiceError.ValidationError("phone", "Invalid E.164 format"))
+    fun normalizeToE164(phone: String, defaultCountryCode: String = "+972"): Result<String> {
+        return try {
+            val cleaned = phone.replace(Regex("[^+\\d]"), "")
+            
+            when {
+                cleaned.isEmpty() -> Result.failure(ServiceError.PhoneValidationError(phone))
+                cleaned.startsWith("+") -> {
+                    if (cleaned.length < 8 || cleaned.length > 15) {
+                        Result.failure(ServiceError.PhoneValidationError(phone))
+                    } else {
+                        Result.success(cleaned)
+                    }
+                }
+                cleaned.startsWith("0") -> {
+                    // Israeli format: remove leading 0 and add +972
+                    val withoutLeadingZero = cleaned.substring(1)
+                    if (withoutLeadingZero.length == 8 || withoutLeadingZero.length == 9) {
+                        Result.success("$defaultCountryCode$withoutLeadingZero")
+                    } else {
+                        Result.failure(ServiceError.PhoneValidationError(phone))
+                    }
+                }
+                else -> {
+                    // Assume local number, add default country code
+                    if (cleaned.length == 8 || cleaned.length == 9) {
+                        Result.success("$defaultCountryCode$cleaned")
+                    } else {
+                        Result.failure(ServiceError.PhoneValidationError(phone))
+                    }
                 }
             }
-            
-            // Israeli numbers starting with 0
-            cleaned.startsWith("0") && cleaned.length == 10 -> {
-                val withoutLeadingZero = cleaned.substring(1)
-                val e164 = "+972$withoutLeadingZero"
-                if (isValidIsraeliNumber(withoutLeadingZero)) {
-                    Ok(e164)
-                } else {
-                    Err(ServiceError.ValidationError("phone", "Invalid Israeli phone number format"))
-                }
-            }
-            
-            // Israeli numbers without country code or leading zero
-            cleaned.length == 9 && (cleaned.startsWith("5") || cleaned.startsWith("2") || cleaned.startsWith("3")) -> {
-                val e164 = "+972$cleaned"
-                Ok(e164)
-            }
-            
-            // Israeli numbers starting with 972 without +
-            cleaned.startsWith("972") && cleaned.length == 12 -> {
-                Ok("+$cleaned")
-            }
-            
-            else -> {
-                Err(ServiceError.ValidationError("phone", "Unsupported phone number format. Please use Israeli format or international E.164."))
-            }
+        } catch (e: Exception) {
+            Result.failure(ServiceError.PhoneValidationError(phone))
         }
     }
+
+    /**
+     * Hash phone number using HMAC-SHA256
+     * This is the only form stored in the database for PII protection
+     */
+    fun hashPhone(normalizedPhone: String): Result<String> {
+        return try {
+            val algorithm = "HmacSHA256"
+            val secretKeySpec = SecretKeySpec(phoneHashSecret.toByteArray(StandardCharsets.UTF_8), algorithm)
+            val mac = Mac.getInstance(algorithm)
+            mac.init(secretKeySpec)
+            
+            val hashBytes = mac.doFinal(normalizedPhone.toByteArray(StandardCharsets.UTF_8))
+            val hashHex = hashBytes.joinToString("") { "%02x".format(it) }
+            Result.success(hashHex)
+        } catch (e: Exception) {
+            Result.failure(ServiceError.PhoneValidationError("Failed to hash phone"))
+        }
+    }
+
+    /**
+     * Process phone number for storage: normalize and hash in one step
+     * This is the main method services should use
+     */
+    fun processPhoneForStorage(rawPhone: String, defaultCountryCode: String = "+972"): Result<String> {
+        return normalizeToE164(rawPhone, defaultCountryCode).fold(
+            onSuccess = { e164 -> hashPhone(e164) },
+            onFailure = { Result.failure(it) }
+        )
+    }
     
     /**
-     * Generate HMAC-SHA256 hash of E.164 phone number.
-     * This is what gets stored in the database.
+     * Validate if a string looks like a phone number
      */
-    fun hashPhone(e164Phone: String): Result<String, ServiceError.InternalError> = try {
-        val mac = Mac.getInstance("HmacSHA256")
-        val secretKeySpec = SecretKeySpec(phoneHashSecret.toByteArray(), "HmacSHA256")
-        mac.init(secretKeySpec)
-        
-        val hashBytes = mac.doFinal(e164Phone.toByteArray())
-        val hexString = hashBytes.joinToString("") { "%02x".format(it) }
-        
-        Ok(hexString)
-    } catch (e: Exception) {
-        Err(ServiceError.InternalError("Failed to hash phone number: ${e.message}"))
-    }
-    
-    /**
-     * Normalize and hash phone number in one operation.
-     */
-    fun normalizeAndHash(phone: String): Result<String, ServiceError> {
-        return normalizeToE164(phone)
-            .andThen { e164 -> hashPhone(e164) }
-    }
-    
-    private fun isValidE164(phone: String): Boolean {
-        return phone.matches(Regex("^\\+[1-9]\\d{1,14}$"))
-    }
-    
-    private fun isValidIsraeliNumber(number: String): Boolean {
+    fun isValidPhoneFormat(phoneNumber: String): Boolean {
+        val cleaned = phoneNumber.replace(Regex("[^+\\d]"), "")
         return when {
-            // Mobile numbers: 50, 51, 52, 53, 54, 55, 56, 57, 58, 59
-            number.startsWith("5") -> number.length == 9 && number.matches(Regex("^5[0-9]\\d{7}$"))
-            // Landline numbers: 02, 03, 04, 08, 09
-            number.startsWith("2") || number.startsWith("3") || number.startsWith("4") || 
-            number.startsWith("8") || number.startsWith("9") -> {
-                number.length == 9 && number.matches(Regex("^[2-9]\\d{8}$"))
-            }
+            cleaned.startsWith("+") && cleaned.length >= 8 && cleaned.length <= 15 -> true
+            cleaned.startsWith("0") && (cleaned.length == 9 || cleaned.length == 10) -> true
+            cleaned.length == 8 || cleaned.length == 9 -> true
             else -> false
         }
     }
