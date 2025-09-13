@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: beenthere-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: beenthere
+      POSTGRES_USER: beenthere
+      POSTGRES_PASSWORD: beenthere_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: beenthere-pgadmin
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@beenthere.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - postgres
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
