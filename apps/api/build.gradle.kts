@@ -64,7 +64,6 @@ dependencies {
     // Google Auth library
     implementation("com.google.api-client:google-api-client:2.7.0")
     implementation("com.google.auth:google-auth-library-oauth2-http:1.32.0")
-    
     // Retrofit for HTTP clients
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-jackson:2.11.0")

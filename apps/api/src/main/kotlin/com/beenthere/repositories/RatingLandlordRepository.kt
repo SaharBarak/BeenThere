@@ -9,6 +9,6 @@ import kotlinx.coroutines.flow.Flow
 @Repository
 interface RatingLandlordRepository : CoroutineCrudRepository<RatingLandlordEntity, UUID> {
     fun findByRantGroupId(rantGroupId: UUID): Flow<RatingLandlordEntity>
-    suspend fun findByRantGroupIdSingle(rantGroupId: UUID): RatingLandlordEntity?
+    suspend fun findFirstByRantGroupId(rantGroupId: UUID): RatingLandlordEntity?
     suspend fun findByRantGroupIdIn(rantGroupIds: List<UUID>): List<RatingLandlordEntity>
 }

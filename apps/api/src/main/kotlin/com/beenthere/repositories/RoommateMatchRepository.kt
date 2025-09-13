@@ -18,8 +18,6 @@ interface RoommateMatchRepository : CoroutineCrudRepository<RoommateMatchEntity,
     """)
     fun findMatchesForUser(userId: UUID): Flow<RoommateMatchEntity>
     
-    fun findByUserId(userId: UUID): Flow<RoommateMatchEntity> = findMatchesForUser(userId)
-    
     @Query("""
         SELECT * FROM roommate_matches 
         WHERE (a_user_id = :userId1 AND b_user_id = :userId2) 

@@ -36,7 +36,7 @@ interface RoommateMessageRepository : CoroutineCrudRepository<RoommateMessageEnt
     """)
     fun findByMatchIdWithLimitDesc(matchId: UUID, limit: Int): Flow<RoommateMessageEntity>
     
-    fun findByMatchIdOrderByCreatedAtDesc(matchId: UUID, limit: Int): Flow<RoommateMessageEntity> = 
+    fun findByMatchIdOrderByCreatedAtDesc(matchId: UUID, limit: Int): Flow<RoommateMessageEntity> =
         findByMatchIdWithLimitDesc(matchId, limit)
         
     @Query("""

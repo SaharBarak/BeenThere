@@ -111,7 +111,7 @@ class RoommatesService(
     
     suspend fun getMatches(userId: UUID): Result<MatchesRes> {
         return try {
-            val matches = roommateMatchRepository.findByUserId(userId).toList()
+            val matches = roommateMatchRepository.findMatchesForUser(userId).toList()
             
             val matchList = matches.map { matchEntity ->
                 // Determine the other user ID

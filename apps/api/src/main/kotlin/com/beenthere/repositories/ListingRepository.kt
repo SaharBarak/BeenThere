@@ -39,8 +39,6 @@ interface ListingRepository : CoroutineCrudRepository<ListingEntity, UUID>, Coro
     
     suspend fun findByIdAndOwnerUserId(id: UUID, ownerUserId: UUID): ListingEntity?
     
-    fun findActiveListings(limit: Int): Flow<ListingEntity> = findActiveWithLimitDesc(limit)
-    
     @Query("""
         SELECT * FROM listings 
         WHERE is_active = true 

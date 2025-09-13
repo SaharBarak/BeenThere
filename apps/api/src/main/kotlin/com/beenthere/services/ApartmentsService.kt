@@ -69,7 +69,7 @@ class ApartmentsService(
             val listings = if (cursorInstant != null) {
                 listingRepository.findActiveListingsAfterCursor(cursorInstant, limit)
             } else {
-                listingRepository.findActiveListings(limit)
+                listingRepository.findActiveWithLimitDesc(limit)
             }.toList()
             
             // Convert to DTOs
