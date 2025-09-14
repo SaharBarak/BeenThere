@@ -47,6 +47,28 @@ sealed class ServiceError(
         code = "RATE_LIMIT_EXCEEDED"
     )
 
+    // Listing-related errors
+    data class ListingNotFound(val listingId: String) : ServiceError(
+        message = "Listing not found: $listingId",
+        code = "LISTING_NOT_FOUND"
+    )
+    
+    data class MemberNotFound(val userId: String) : ServiceError(
+        message = "Member not found: $userId", 
+        code = "MEMBER_NOT_FOUND"
+    )
+    
+    // Permission errors
+    data class Forbidden(val reason: String) : ServiceError(
+        message = "Forbidden: $reason",
+        code = "FORBIDDEN"
+    )
+    
+    data class BadRequest(val reason: String) : ServiceError(
+        message = "Bad request: $reason",
+        code = "BAD_REQUEST"
+    )
+
     // Generic errors
     data class DatabaseError(private val errorCause: Throwable) : ServiceError(
         message = "Database operation failed",
