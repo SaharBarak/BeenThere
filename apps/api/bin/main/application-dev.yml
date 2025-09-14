@@ -1,0 +1,94 @@
+# Development Profile Configuration
+# R2DBC for runtime + JDBC for Flyway migrations only
+spring:
+    
+  # R2DBC Configuration (Runtime - Non-blocking)
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/beenthere
+    username: postgres
+    password: postgres
+    pool:
+      initial-size: 5
+      max-size: 20
+      max-acquire-time: 60s
+      max-idle-time: 45m
+      
+  # JDBC Configuration (Flyway migrations only - NOT on request path)
+  datasource:
+    url: jdbc:postgresql://localhost:5432/beenthere
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    
+  # Flyway Migration Configuration
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    locations: classpath:db/migration
+    schemas: public
+    table: flyway_schema_history
+    
+  # Security Configuration (Development)
+  security:
+    # Temporarily permit all for development - will be replaced with JWT
+    permit-all: true
+    
+  # Jackson Configuration
+  jackson:
+    default-property-inclusion: NON_NULL
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+      
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    # Enable database health indicator
+    db:
+      enabled: true
+    # Custom health indicators
+    flyway:
+      enabled: true
+      
+# Application Configuration
+beenthere:
+  # PII Security
+  phone:
+    hash-secret: ${PHONE_HASH_SECRET:dev-phone-hash-secret-change-in-production}
+    
+  # External Integrations (Mocked in dev)
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:dev-google-client-id}
+    
+  # AWS S3 (Mocked in dev)
+  s3:
+    bucket: ${S3_BUCKET:dev-beenthere-photos}
+    region: ${AWS_REGION:us-east-1}
+    
+# Logging Configuration
+logging:
+  level:
+    com.beenthere: DEBUG
+    org.springframework.r2dbc: DEBUG
+    org.springframework.data.r2dbc: DEBUG
+    org.flywaydb: INFO
+    reactor.netty: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    
+# Server Configuration
+server:
+  port: 8080
+  error:
+    include-stacktrace: on_param
+    include-message: always
