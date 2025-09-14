@@ -88,11 +88,14 @@ class ApartmentsService(
             // Parse cursor for pagination
             val cursorInstant = cursor?.let { Instant.parse(it) }
             
-            // Get listings with pagination
+            // Extract type filter
+            val typeFilter = filters["type"] // "ENTIRE_PLACE" or "ROOMMATE_GROUP"
+            
+            // Get listings with pagination and type filtering
             val listings = if (cursorInstant != null) {
-                listingRepository.findActiveListingsAfterCursor(cursorInstant, limit)
+                listingRepository.findActiveListingsAfterCursorAndType(cursorInstant, limit, typeFilter)
             } else {
-                listingRepository.findActiveWithLimitDesc(limit)
+                listingRepository.findActiveWithLimitDescAndType(limit, typeFilter)
             }.toList()
             
             // Convert to DTOs with enrichment
