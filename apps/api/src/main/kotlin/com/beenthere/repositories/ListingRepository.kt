@@ -47,4 +47,23 @@ interface ListingRepository : CoroutineCrudRepository<ListingEntity, UUID>, Coro
         LIMIT :limit
     """)
     fun findActiveListingsAfterCursor(cursor: Instant, limit: Int): Flow<ListingEntity>
+    
+    @Query("""
+        SELECT * FROM listings 
+        WHERE is_active = true 
+        AND (:type IS NULL OR type = :type)
+        ORDER BY created_at DESC, id DESC 
+        LIMIT :limit
+    """)
+    fun findActiveWithLimitDescAndType(limit: Int, type: String?): Flow<ListingEntity>
+    
+    @Query("""
+        SELECT * FROM listings 
+        WHERE is_active = true 
+        AND created_at < :cursor
+        AND (:type IS NULL OR type = :type)
+        ORDER BY created_at DESC, id DESC 
+        LIMIT :limit
+    """)
+    fun findActiveListingsAfterCursorAndType(cursor: Instant, limit: Int, type: String?): Flow<ListingEntity>
 }

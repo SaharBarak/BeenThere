@@ -17,6 +17,8 @@ interface ListingSwipeRepository : CoroutineCrudRepository<ListingSwipeEntity, U
     
     fun findByListingIdOrderByCreatedAtDesc(listingId: UUID): Flow<ListingSwipeEntity>
     
+    fun findByListingIdAndAction(listingId: UUID, action: String): Flow<ListingSwipeEntity>
+    
     @Query("""
         SELECT COUNT(*) FROM listing_swipes 
         WHERE listing_id = :listingId AND action = 'LIKE'

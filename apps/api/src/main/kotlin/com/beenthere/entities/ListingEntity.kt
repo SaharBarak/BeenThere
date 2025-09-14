@@ -5,7 +5,13 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 import java.time.Instant
+import java.time.LocalDate
 import java.util.*
+
+enum class ListingType(val value: String) {
+    ENTIRE_PLACE("ENTIRE_PLACE"),
+    ROOMMATE_GROUP("ROOMMATE_GROUP")
+}
 
 @Table("listings")
 data class ListingEntity(
@@ -34,5 +40,21 @@ data class ListingEntity(
     val isActive: Boolean = true,
     
     @Column("created_at")
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now(),
+    
+    // Roommate Group Fields (V3 Migration)
+    @Column("type")
+    val type: String = ListingType.ENTIRE_PLACE.value,
+    
+    @Column("capacity_total")
+    val capacityTotal: Int? = null,
+    
+    @Column("spots_available")
+    val spotsAvailable: Int? = null,
+    
+    @Column("move_in_date")
+    val moveInDate: LocalDate? = null,
+    
+    @Column("rent_per_room")
+    val rentPerRoom: Int? = null
 )

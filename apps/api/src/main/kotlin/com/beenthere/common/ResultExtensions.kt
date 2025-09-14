@@ -34,9 +34,13 @@ fun ServiceError.toResponseEntity(): ResponseEntity<ErrorResponse> {
     val status = when (this) {
         is ServiceError.PlaceNotFound -> HttpStatus.NOT_FOUND
         is ServiceError.UserNotFound -> HttpStatus.NOT_FOUND
+        is ServiceError.ListingNotFound -> HttpStatus.NOT_FOUND
+        is ServiceError.MemberNotFound -> HttpStatus.NOT_FOUND
         is ServiceError.ValidationError -> HttpStatus.BAD_REQUEST
         is ServiceError.PhoneValidationError -> HttpStatus.BAD_REQUEST
+        is ServiceError.BadRequest -> HttpStatus.BAD_REQUEST
         is ServiceError.InvalidGoogleToken -> HttpStatus.UNAUTHORIZED
+        is ServiceError.Forbidden -> HttpStatus.FORBIDDEN
         is ServiceError.RateLimitExceeded -> HttpStatus.TOO_MANY_REQUESTS
         is ServiceError.PlaceLookupFailed -> HttpStatus.BAD_GATEWAY
         is ServiceError.ExternalServiceError -> HttpStatus.BAD_GATEWAY
