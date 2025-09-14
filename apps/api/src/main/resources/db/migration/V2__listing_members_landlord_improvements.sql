@@ -26,19 +26,18 @@ CREATE INDEX idx_listing_members_is_current ON listing_members(is_current) WHERE
 CREATE INDEX idx_listings_landlord_id ON listings(landlord_id);
 
 -- Add indexes for rating aggregations (needed for W3 feed enrichment)
-CREATE INDEX idx_ratings_apartment_place_id ON ratings_apartment(rant_group_id);
-CREATE INDEX idx_ratings_landlord_rant_group_id ON ratings_landlord(rant_group_id);
-CREATE INDEX idx_rant_groups_place_id ON rant_groups(place_id);
-CREATE INDEX idx_rant_groups_landlord_id ON rant_groups(landlord_id);
+-- Note: Some indexes like idx_ratings_landlord_rant_group_id already exist from V1
+CREATE INDEX IF NOT EXISTS idx_ratings_apartment_place_id ON ratings_apartment(rant_group_id);
+CREATE INDEX IF NOT EXISTS idx_rant_groups_landlord_id ON rant_groups(landlord_id);
 
--- Add indexes for roommate ratings aggregation
-CREATE INDEX idx_ratings_roommate_ratee_user_id ON ratings_roommate(ratee_user_id) WHERE ratee_user_id IS NOT NULL;
+-- Add indexes for roommate ratings aggregation (check if exists since V1 may have created them)
+CREATE INDEX IF NOT EXISTS idx_ratings_roommate_ratee_user_id ON ratings_roommate(ratee_user_id) WHERE ratee_user_id IS NOT NULL;
 
 -- Performance indexes for feeds and pagination
-CREATE INDEX idx_listings_created_at_id ON listings(created_at DESC, id DESC) WHERE is_active = true;
-CREATE INDEX idx_users_created_at ON users(created_at DESC);
-CREATE INDEX idx_roommate_matches_users ON roommate_matches(a_user_id, b_user_id);
-CREATE INDEX idx_roommate_matches_created_at ON roommate_matches(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_listings_created_at_id ON listings(created_at DESC, id DESC) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_roommate_matches_users ON roommate_matches(a_user_id, b_user_id);
+CREATE INDEX IF NOT EXISTS idx_roommate_matches_created_at ON roommate_matches(created_at DESC);
 
 -- Add constraint to ensure listing owner is not in listing_members
 -- (Owner should be implicit, not explicit in members table)
@@ -61,6 +60,6 @@ CREATE TRIGGER trigger_check_owner_not_member
     FOR EACH ROW
     EXECUTE FUNCTION check_owner_not_member();
 
--- Enhance places table with better search capabilities
-CREATE INDEX idx_places_google_place_id ON places(google_place_id);
-CREATE INDEX idx_places_location ON places(lat, lng) WHERE lat IS NOT NULL AND lng IS NOT NULL;
+-- Enhance places table with better search capabilities (V1 may already have these)
+CREATE INDEX IF NOT EXISTS idx_places_google_place_id ON places(google_place_id);
+CREATE INDEX IF NOT EXISTS idx_places_location ON places(lat, lng) WHERE lat IS NOT NULL AND lng IS NOT NULL;
