@@ -193,21 +193,46 @@ class ApartmentsService(
             )
             listingSwipeRepository.save(swipe)
             
-            // Check for match conditions
+            // Check for match conditions based on listing type
             var matchId: String? = null
             if (req.action == ListingSwipeAction.LIKE) {
-                // Match if autoAccept is true OR owner has already liked the seeker
-                val shouldMatch = listing.autoAccept || 
-                    listingSwipeRepository.findByUserIdAndListingId(listing.ownerUserId, listingId)?.action == "LIKE"
-                
-                if (shouldMatch) {
-                    // Create match
-                    val match = ListingMatchEntity(
-                        userId = userId,
-                        listingId = listingId
-                    )
-                    val savedMatch = listingMatchRepository.save(match)
-                    matchId = savedMatch.id.toString()
+                when (listing.type) {
+                    "ENTIRE_PLACE" -> {
+                        // Traditional matching: autoAccept OR mutual like with owner
+                        val shouldMatch = listing.autoAccept || 
+                            listingSwipeRepository.findByUserIdAndListingId(listing.ownerUserId, listingId)?.action == "LIKE"
+                        
+                        if (shouldMatch) {
+                            // Create match immediately
+                            val match = ListingMatchEntity(
+                                userId = userId,
+                                listingId = listingId
+                            )
+                            val savedMatch = listingMatchRepository.save(match)
+                            matchId = savedMatch.id.toString()
+                        }
+                    }
+                    "ROOMMATE_GROUP" -> {
+                        // Roommate group: seeker joins candidate queue
+                        // Admin will review and vote via ListingMemberService.voteOnCandidate()
+                        // No immediate match - seeker appears in admin's candidates list
+                        // Match only created when admin votes LIKE
+                        matchId = null // No immediate match for roommate groups
+                    }
+                    else -> {
+                        // Default to ENTIRE_PLACE behavior
+                        val shouldMatch = listing.autoAccept || 
+                            listingSwipeRepository.findByUserIdAndListingId(listing.ownerUserId, listingId)?.action == "LIKE"
+                        
+                        if (shouldMatch) {
+                            val match = ListingMatchEntity(
+                                userId = userId,
+                                listingId = listingId
+                            )
+                            val savedMatch = listingMatchRepository.save(match)
+                            matchId = savedMatch.id.toString()
+                        }
+                    }
                 }
             }
             

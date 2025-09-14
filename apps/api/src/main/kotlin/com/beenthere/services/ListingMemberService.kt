@@ -170,7 +170,7 @@ class ListingMemberService(
         candidateUserId: UUID, 
         action: String,
         requesterId: UUID
-    ): Result<ListingSwipeRes> {
+    ): Result<CandidateVoteRes> {
         return try {
             // Verify requester is admin/owner
             val isAdmin = listingMemberRepository.isOwner(listingId, requesterId)
@@ -183,7 +183,11 @@ class ListingMemberService(
                     // Create match between seeker and admin (not whole group)
                     val existingMatch = listingMatchRepository.findByUserIdAndListingId(candidateUserId, listingId)
                     if (existingMatch != null) {
-                        return Result.success(ListingSwipeRes(matchId = existingMatch.id.toString()))
+                        return Result.success(CandidateVoteRes(
+                            matchId = existingMatch.id.toString(),
+                            action = action,
+                            candidateUserId = candidateUserId.toString()
+                        ))
                     }
                     
                     val match = listingMatchRepository.save(ListingMatchEntity(
@@ -192,11 +196,19 @@ class ListingMemberService(
                         createdAt = Instant.now()
                     ))
                     
-                    Result.success(ListingSwipeRes(matchId = match.id.toString()))
+                    Result.success(CandidateVoteRes(
+                        matchId = match.id.toString(),
+                        action = action,
+                        candidateUserId = candidateUserId.toString()
+                    ))
                 }
                 "PASS" -> {
                     // Record the pass decision (could store in separate table if needed)
-                    Result.success(ListingSwipeRes(matchId = null))
+                    Result.success(CandidateVoteRes(
+                        matchId = null,
+                        action = action,
+                        candidateUserId = candidateUserId.toString()
+                    ))
                 }
                 else -> Result.failure(ServiceError.BadRequest("Invalid action: $action"))
             }
@@ -244,20 +256,38 @@ class ListingMemberService(
         cursor: String?, 
         limit: Int
     ): List<Pair<UserEntity, ListingSwipeEntity>> {
-        // This would need a complex query to get users who:
+        // Get users who:
         // 1. Swiped LIKE on this listing
-        // 2. Haven't been matched yet
+        // 2. Haven't been matched yet (no entry in listing_matches)
         // 3. Are ordered by swipe time for pagination
         
-        // For now, simplified implementation
         val swipes = listingSwipeRepository.findByListingIdAndAction(listingId, "LIKE")
             .toList()
-            .take(limit)
         
-        return swipes.mapNotNull { swipe ->
-            val user = userRepository.findById(swipe.userId)
-            if (user != null) Pair(user, swipe) else null
+        // Filter out users who already have matches with this listing
+        val candidateSwipes = swipes.filter { swipe ->
+            val existingMatch = listingMatchRepository.findByUserIdAndListingId(swipe.userId, listingId)
+            existingMatch == null // Only include if no match exists
         }
+        
+        // Apply cursor pagination if provided
+        val filteredSwipes = if (cursor != null) {
+            try {
+                val cursorInstant = Instant.parse(cursor)
+                candidateSwipes.filter { it.createdAt.isAfter(cursorInstant) }
+            } catch (e: Exception) {
+                candidateSwipes
+            }
+        } else {
+            candidateSwipes
+        }
+        
+        return filteredSwipes
+            .take(limit)
+            .mapNotNull { swipe ->
+                val user = userRepository.findById(swipe.userId)
+                if (user != null) Pair(user, swipe) else null
+            }
     }
     
     private suspend fun calculateRoommateRating(userId: UUID): RatingsSummary {

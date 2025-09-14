@@ -388,3 +388,16 @@ data class VoteReq(
     @JsonProperty("action")
     val action: String // "LIKE" | "PASS"
 )
+
+// ===== CANDIDATE VOTING RESPONSE =====
+
+data class CandidateVoteRes(
+    @JsonProperty("matchId")
+    val matchId: String?,
+    
+    @JsonProperty("action")
+    val action: String, // "LIKE" | "PASS"
+    
+    @JsonProperty("candidateUserId")
+    val candidateUserId: String
+)
